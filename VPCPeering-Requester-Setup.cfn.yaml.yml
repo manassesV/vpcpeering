@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This templates creates a VPC Peering connection. (Request Acocunt)
+Metadata:
+    AWS::CloudFormation::Interface:
+          ParametersGroups:
+              - Label:
+                   default: Network Condiguration
+                Parameters:
+                   - VPCID
+              - Label:
+                  default: VPC Peering Configuration
+                Parameters:
+                  - PeerName
+                  - PeerOwnerId
+                  - PeerRoleARN
+                  - PeerVPCID
+          ParametersLabel:  
+               PeerName:
+                   default: Peer Name
+               PeerOwnerId:
+                   default: Peer Owner ID
+               PeerRoleARN:
+                   default: Peer Role ARN
+               PeerVPCID:
+                   default: Peer VPC ID
+               VPCID:
+                   default: VPC ID
+Parameters:
+    PeerName:
+       Description: Name of the VPC Peer
+       MaxLength: 255
+       Type: String
+    PeerOwnerId:
+       AllowedPattern: '^\d{12}$'
+       ConstraintDescription: Must be 12 digits.
+       Description: AWS account ID of the owner of accepter VPC
+       Type: String 
+    PeerRoleARN:
+       AllowedPattern: '^arn:(aws[a-zA-Z-]*)?:iam::\d{12}:role\/([\w+=,.@-]*\/)*[\w+=,.@-]+'
+       Description: ARN of the VPC peero role for the éering connection in abother account. Required when you are peering a VPC in diferent AWS account.
+       Type: String
+    PeerVPCID:
+       AllowedPattern: '^vpc-[0-9a-f]{17}$'
+       ConstraintDescription: Must have a prefix of "vpc-". Followed by 17 characteres (numbers, letters "a-f")
+       Description: ID of the VPC with wich you are creating the VPc connection
+       Type: String
+    VPCID:
+       Description: ID of the VPC
+       Type: AWS::EC2::VPC::Id
+Rules:
+   PeerRoleValidation:
+       RuleCondition: !Equals [!Ref PeerRoleARN, '']
+       Assertions:
+          - AssetDescription: ARN of the VPC peer role is required when you are peering a VPC in diferent AWS account
+            Assert: !Equals [!Ref PeerOwnerId, !Ref AWS::AccountId]
+Conditions:
+   PeerRoleCondition: !Not [!Equals [!Ref PeerRoleARN, '']]
+Resources:
+   VPCPeeringConnection:
+       Type: AWS::EC2::VPCPeeringConnection
+       Properties:
+           VpcId: !Ref VPCID
+           PeerVpcId: !Ref PeerVPCID
+           PeerOwnerId: !Ref PeerOwnerId
+           PeerRoleARN: !If [PeerRoleCondition, !Ref PeerRoleARN, !Ref AWS::NoValue]
+           Tags:
+               - Key: Name
+                 Value: !Ref PeerName
+Outputs:
+    VPCPeeringConnectionId:
+       Description: VPC Peering ID
+       Value: !Ref VPCPeeringConnection
