@@ -4,7 +4,7 @@ Metadata:
     AWS::CloudFormation::Interface:
            ParameterGroups:
                 - Label:
-                     default: Network Configuration
+                     default: Network Configuration 
                   Parameters:
                      - RouteTableIds
                      - NumberOfRouteTables
